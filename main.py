@@ -5,13 +5,13 @@ import json
 page = 1
 
 
-def write_json(new_data, filename='cars.json'):
+def write_json(new_data, filename="cars.json"):
     with open(filename) as json_file:
         data = json.load(json_file)
 
     data.append(new_data)
 
-    with open(filename, 'w', encoding='utf-8') as outfile:
+    with open(filename, "w", encoding="utf-8") as outfile:
         json.dump(data, outfile, ensure_ascii=False)
 
 
