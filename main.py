@@ -1,31 +1,49 @@
 from bs4 import BeautifulSoup
 import requests
+import json
 
-x = 0
+page = 1
+
+
+def write_json(new_data, filename='cars.json'):
+    with open(filename) as json_file:
+        data = json.load(json_file)
+
+    data.append(new_data)
+
+    with open(filename, 'w', encoding='utf-8') as outfile:
+        json.dump(data, outfile, ensure_ascii=False)
+
 
 while True:
-    if x == 0:
-        url = 'https://auto.ria.com/car/used/'
-    else:
-        url = 'https://auto.ria.com/car/used/' + next_page_link
+    url = "https://auto.ria.com/car/used/?page=" + str(page)
 
     request = requests.get(url)
-    soup = BeautifulSoup(request.text, 'html.parser')
-    contents = soup.find_all('div', class_='content')
+    soup = BeautifulSoup(request.content.decode("utf-8", "ignore"), "html.parser")
+    cars = soup.find_all("section", {"class": "ticket-item"})
 
-    for content in contents:
-        name = content.find('a', attrs={'class': 'address'}).get('title')
-        sublink = content.find('a', attrs={'class': 'address'}).get('href')
-        price = content.find('div', attrs={'class': 'price-ticket'}).get('data-main-price')
-        if "Hyundai" in name and int(price) <= 7000:
-            print(str(name) + ' - ' + str(price) + ' USD' + ' - ' + str(sublink))
-        else:
+    for car in cars:
+        soldOut = car.find("i", {"class": "icon-sold-out"})
+        if soldOut:
             continue
+        carName = car.find("div", {"class": "head-ticket"}).text.strip()
+        carLink = car.find("a", {"class": "address"}).get("href")
+        carPrice = car.find("span", {"data-currency": "USD"}).text.replace(" ", "")
+        carCityArr = car.find("li", {"class": "view-location"}).text.strip().split()[:-3]
+        carCity = " ".join(carCityArr)
+        carTransmission = car.select_one(".characteristic li:nth-of-type(4)").text.strip()
+        carFuel = car.select_one(".characteristic li:nth-of-type(3)").text.strip()
+        carRace = car.find("li", {"class": "js-race"}).text.strip()
 
-    btn_next = soup.find('a', class_='page-link js-next')
-    if btn_next is not None:
-        url_next_page = btn_next.get('href')
-        next_page_link = url_next_page[32:]
-        x = x + 1
-    else:
-        break
+        carObj = {
+            "name": carName,
+            "link": carLink,
+            "price": carPrice,
+            "city": carCity,
+            "transmission": carTransmission,
+            "fuel": carFuel,
+            "race": carRace
+        }
+
+        write_json(carObj)
+    page += 1
