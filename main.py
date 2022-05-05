@@ -6,7 +6,7 @@ page = 1
 
 
 def write_json(new_data, filename="cars.json"):
-    with open(filename) as json_file:
+    with open(filename, encoding="utf8") as json_file:
         data = json.load(json_file)
 
     data.append(new_data)
@@ -19,7 +19,7 @@ while True:
     url = "https://auto.ria.com/car/used/?page=" + str(page)
 
     request = requests.get(url)
-    soup = BeautifulSoup(request.content.decode("utf-8", "ignore"), "html.parser")
+    soup = BeautifulSoup(request.content.decode("utf-8"), "html.parser")
     cars = soup.find_all("section", {"class": "ticket-item"})
 
     for car in cars:
